@@ -16,7 +16,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closer;
-import com.google.common.io.Files;
 import com.skcraft.launcher.Launcher;
 import com.skcraft.launcher.LauncherUtils;
 import com.skcraft.launcher.builder.loaders.*;
@@ -35,7 +34,7 @@ import lombok.extern.java.Log;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Collections;
+import java.nio.file.Files;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Properties;
@@ -162,10 +161,22 @@ public class PackageBuilder {
                 BasicInstallProfile basicProfile = mapper.readValue(BuilderUtils.readStringFromStream(reader),
                         BasicInstallProfile.class);
 
-                if (basicProfile.isLegacy()) {
-                    processor = new OldForgeLoaderProcessor();
-                } else if (basicProfile.getProfile().equalsIgnoreCase("forge")) {
-                    processor = new ModernForgeLoaderProcessor();
+                // Extract the library
+                String filePath = profile.getInstallData().getFilePath();
+                String libraryPath = profile.getInstallData().getPath();
+
+                if (filePath != null && libraryPath != null) {
+                    ZipEntry libraryEntry = BuilderUtils.getZipEntry(jarFile, filePath);
+
+                    if (libraryEntry != null) {
+                        Library library = new Library();
+                        library.setName(libraryPath);
+                        File extractPath = new File(librariesDir, library.getPath(Environment.getInstance()));
+                        Files.createDirectories(extractPath.toPath());
+                        ByteStreams.copy(closer.register(jarFile.getInputStream(libraryEntry)), Files.newOutputStream(extractPath.toPath()));
+                    } else {
+                        log.warning("Could not find the file '" + filePath + "' in " + file.getAbsolutePath() + ", which means that this mod loader will not work correctly");
+                    }
                 }
             } else if (BuilderUtils.getZipEntry(jarFile, "fabric-installer.json") != null) {
             	processor = new FabricLoaderProcessor();
@@ -198,8 +209,9 @@ public class PackageBuilder {
         for (Library library : Iterables.concat(loaderLibraries, installerLibraries)) {
             library.ensureDownloadsExist();
 
-            for (Library.Artifact artifact : library.getDownloads().getAllArtifacts()) {
-                File outputPath = new File(librariesDir, artifact.getPath());
+            if (!outputPath.exists()) {
+                Files.createDirectories(outputPath.toPath());
+                boolean found = false;
 
                 if (!outputPath.exists()) {
                     Files.createParentDirs(outputPath);
@@ -367,7 +379,7 @@ public class PackageBuilder {
 
     private static BuilderOptions parseArgs(String[] args) {
         BuilderOptions options = new BuilderOptions();
-        new JCommander(options, args);
+        new JCommander(options).parse(args);
         options.choosePaths();
         return options;
     }

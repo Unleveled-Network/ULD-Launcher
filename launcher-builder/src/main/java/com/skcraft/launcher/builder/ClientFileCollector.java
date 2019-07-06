@@ -28,6 +28,7 @@ public class ClientFileCollector extends DirectoryWalker {
     private final Manifest manifest;
     private final PropertiesApplicator applicator;
     private final File destDir;
+    @SuppressWarnings({"deprecation", "UnstableApiUsage"})
     private HashFunction hf = Hashing.sha1();
 
     /**
@@ -57,7 +58,7 @@ public class ClientFileCollector extends DirectoryWalker {
         }
 
         FileInstall entry = new FileInstall();
-        String hash = Files.hash(file, hf).toString();
+        String hash = Files.asByteSource(file).hash(hf).toString();
         String to = FilenameUtils.separatorsToUnix(FilenameUtils.normalize(relPath));
         
         // url.txt override file
@@ -65,10 +66,8 @@ public class ClientFileCollector extends DirectoryWalker {
                 file.getName() + FileUrlScanner.URL_FILE_SUFFIX);
         String location;
         boolean copy = true;
-        if (urlFile.exists() && FileUrlScanner.isEnabled()) {
-            FileUrlRedirect redirect = FileUrlRedirect.fromFile(urlFile);
-
-            location = redirect.getUrl().toString();
+        if (urlFile.exists() && !System.getProperty("com.skcraft.builder.ignoreURLOverrides", "false").equalsIgnoreCase("true")) {
+            location = Files.asCharSource(urlFile, Charset.defaultCharset()).readFirstLine();
             copy = false;
         } else {
             location = hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash;
