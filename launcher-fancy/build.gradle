@@ -1,23 +1,26 @@
 plugins {
     id 'application'
     id "com.github.johnrengelman.shadow"
+    id "io.franzbecker.gradle-lombok"
 }
 
-mainClassName = "com.skcraft.launcher.FancyLauncher"
-
-repositories {
-    maven {
-        name = 'obw maven'
-        url = 'https://maven.offbeatwit.ch/repository/snapshots'
-    }
+configurations {
+    compileJava.dependsOn(":launcher:build")
+    jar.enabled = false
+    jar.dependsOn("shadowJar")
 }
 
 dependencies {
-    compile project(':launcher')
-    compile 'io.github.cottonmc.insubstantial:substance:7.3.1-SNAPSHOT'
+    compile(project(path: ":launcher"))
+    compile("com.github.insubstantial:substance:7.3")
+}
+
+jar {
+    manifest {
+        attributes("Main-Class": "com.skcraft.launcher.FancyLauncher")
+    }
 }
 
 shadowJar {
+    classifier = null
 }
-
-build.dependsOn(shadowJar)

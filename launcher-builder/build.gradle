@@ -1,17 +1,27 @@
 plugins {
     id 'application'
     id "com.github.johnrengelman.shadow"
+    id "io.franzbecker.gradle-lombok"
 }
 
-mainClassName = "com.skcraft.launcher.builder.PackageBuilder"
+configurations {
+    compileJava.dependsOn(":launcher:build")
+    jar.enabled = false
+    jar.dependsOn("shadowJar")
+}
 
 dependencies {
-    compile project(':launcher')
-    compile 'org.tukaani:xz:1.0'
-    compile 'org.apache.commons:commons-compress:1.9'
+    compile(project(path: ":launcher"))
+    compile("org.tukaani:xz:1.0")
+    compile("org.apache.commons:commons-compress:1.9")
+}
+
+jar {
+    manifest {
+        attributes("Main-Class": "com.skcraft.launcher.builder.PackageBuilder")
+    }
 }
 
 shadowJar {
+    classifier = null
 }
-
-build.dependsOn(shadowJar)

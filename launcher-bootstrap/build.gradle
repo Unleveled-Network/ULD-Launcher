@@ -1,25 +1,29 @@
 plugins {
     id 'application'
     id "com.github.johnrengelman.shadow"
-    id 'io.franzbecker.gradle-lombok'
+    id "io.franzbecker.gradle-lombok"
+}
+
+configurations {
+    jar.enabled = false
+    jar.dependsOn("shadowJar")
+}
+
+dependencies {
+    compile("com.googlecode.json-simple:json-simple:1.1.1")
+    compile("javax.xml.bind:jaxb-api:2.3.0")
 }
 
 mainClassName = "com.skcraft.launcher.Bootstrap"
 
-dependencies {
-    compile 'com.googlecode.json-simple:json-simple:1.1.1'
-    compile 'javax.xml.bind:jaxb-api:2.3.0'
-}
-
 processResources {
-    filesMatching('**/*.properties') {
+    filesMatching("**/*.properties") {
         filter {
-            it.replace('${project.version}', project.version)
+            it.replace("\${project.version}", "${project.version}")
         }
     }
 }
 
 shadowJar {
+    classifier = null
 }
-
-build.dependsOn(shadowJar)
