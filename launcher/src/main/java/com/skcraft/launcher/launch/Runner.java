@@ -403,6 +403,9 @@ public class Runner implements Callable<Process>, ProgressObservable {
         map.put("classpath", builder.buildClassPath());
         map.put("natives_directory", extractDir.getAbsolutePath());
 
+        // Creation Reborn
+        map.put("version_type", versionManifest.getType());
+
         return map;
     }
 
