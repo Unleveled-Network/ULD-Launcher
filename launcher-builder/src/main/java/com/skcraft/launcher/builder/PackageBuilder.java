@@ -172,7 +172,7 @@ public class PackageBuilder {
                         Library library = new Library();
                         library.setName(libraryPath);
                         File extractPath = new File(librariesDir, library.getPath(Environment.getInstance()));
-                        Files.createDirectories(extractPath.toPath());
+                        Files.createDirectories(extractPath.getParentFile().toPath());
                         ByteStreams.copy(closer.register(jarFile.getInputStream(libraryEntry)), Files.newOutputStream(extractPath.toPath()));
                     } else {
                         log.warning("Could not find the file '" + filePath + "' in " + file.getAbsolutePath() + ", which means that this mod loader will not work correctly");
@@ -210,7 +210,7 @@ public class PackageBuilder {
             library.ensureDownloadsExist();
 
             if (!outputPath.exists()) {
-                Files.createDirectories(outputPath.toPath());
+                Files.createDirectories(outputPath.getParentFile().toPath());
                 boolean found = false;
 
                 if (!outputPath.exists()) {
