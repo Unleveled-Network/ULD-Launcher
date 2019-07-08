@@ -8,6 +8,7 @@ package com.skcraft.launcher.bootstrap;
 
 import lombok.Getter;
 import lombok.extern.java.Log;
+import net.creationreborn.launcher.bootstrap.util.Toolbox;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -96,7 +97,33 @@ public class HttpRequest implements Closeable, ProgressObservable {
                 throw new IllegalArgumentException("Connection already executed");
             }
 
-            conn = this.runRequest(url);
+            conn = (HttpURLConnection) reformat(url).openConnection();
+            // Creation Reborn
+            conn.setRequestProperty("User-Agent", Toolbox.USER_AGENT);
+
+            if (body != null) {
+                conn.setRequestProperty("Content-Type", contentType);
+                conn.setRequestProperty("Content-Length", Integer.toString(body.length));
+                conn.setDoInput(true);
+            }
+
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                conn.setRequestProperty(entry.getKey(), entry.getValue());
+            }
+
+            conn.setRequestMethod(method);
+            conn.setUseCaches(false);
+            conn.setDoOutput(true);
+            conn.setReadTimeout(READ_TIMEOUT);
+
+            conn.connect();
+
+            if (body != null) {
+                DataOutputStream out = new DataOutputStream(conn.getOutputStream());
+                out.write(body);
+                out.flush();
+                out.close();
+            }
 
             inputStream = conn.getResponseCode() == HttpURLConnection.HTTP_OK ?
                     conn.getInputStream() : conn.getErrorStream();
