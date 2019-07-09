@@ -31,6 +31,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import net.creationreborn.launcher.builder.Builder;
 
 import java.io.*;
 import java.net.URL;
@@ -438,6 +439,9 @@ public class PackageBuilder {
         manifest.setVersion(options.getVersion());
         manifest.setLibrariesLocation(options.getLibrariesLocation());
         manifest.setObjectsLocation(options.getObjectsLocation());
+
+        // Creation Reborn
+        new Builder(options, mapper).process(manifest);
 
         builder.scan(options.getFilesDir());
         builder.addFiles(options.getFilesDir(), options.getObjectsDir());
