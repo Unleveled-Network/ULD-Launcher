@@ -32,6 +32,7 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.java.Log;
 import net.creationreborn.launcher.builder.Builder;
+import net.creationreborn.launcher.builder.ClientFileCollector;
 
 import java.io.*;
 import java.net.URL;
