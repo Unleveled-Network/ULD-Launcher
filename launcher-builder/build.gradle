@@ -12,7 +12,7 @@ configurations {
 
 dependencies {
     compile(project(path: ":launcher"))
-    compile("org.apache.commons:commons-compress:1.18")
+    compile("org.apache.commons:commons-compress:1.19")
     compile("org.tukaani:xz:1.8")
 }
 
@@ -23,5 +23,5 @@ jar {
 }
 
 shadowJar {
-    classifier = null
+    archiveClassifier.set(null)
 }

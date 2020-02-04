@@ -18,7 +18,7 @@ configurations {
 dependencies {
     compile(project(path: ":launcher-builder"))
     compile("com.jidesoft:jide-oss:3.6.18")
-    compile("org.eclipse.jetty:jetty-server:9.4.19.v20190610")
+    compile("org.eclipse.jetty:jetty-server:9.4.26.v20200117")
 }
 
 mainClassName = "com.skcraft.launcher.creator.Creator"
@@ -32,5 +32,5 @@ processResources {
 }
 
 shadowJar {
-    classifier = null
+    archiveClassifier.set(null)
 }

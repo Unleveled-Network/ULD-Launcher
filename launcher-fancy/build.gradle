@@ -22,5 +22,5 @@ jar {
 }
 
 shadowJar {
-    classifier = null
+    archiveClassifier.set(null)
 }
