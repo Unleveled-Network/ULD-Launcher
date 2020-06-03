@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.skcraft.launcher.Bootstrap;
 import lombok.extern.java.Log;
+import net.creationreborn.launcher.bootstrap.util.Toolbox;
 
 import javax.swing.*;
 import java.io.File;
@@ -62,7 +63,17 @@ public class Downloader implements Runnable, ProgressObservable {
             }
         });
 
-        URL updateUrl = HttpRequest.url(bootstrap.getProperties().getProperty("latestUrl"));
+        File finalFile = new File(bootstrap.getBinariesDir(), System.currentTimeMillis() + ".jar.pack");
+        File tempFile = new File(finalFile.getParentFile(), finalFile.getName() + ".tmp");
+
+        // CreationReborn
+        // URL updateUrl = HttpRequest.url(bootstrap.getProperties().getProperty("latestUrl"));
+        URL updateUrl;
+        if (Toolbox.isDevelopmentChannel()) {
+            updateUrl = HttpRequest.url(bootstrap.getProperties().getProperty("developmentUrl"));
+        } else {
+            updateUrl = HttpRequest.url(bootstrap.getProperties().getProperty("latestUrl"));
+        }
 
         log.info("Reading update URL " + updateUrl + "...");
         List<LauncherBinary> binaries = new ArrayList<LauncherBinary>();

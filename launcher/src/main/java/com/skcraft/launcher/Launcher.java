@@ -29,6 +29,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.extern.java.Log;
+import net.creationreborn.launcher.LauncherArguments;
 import net.creationreborn.launcher.auth.AccountList;
 import org.apache.commons.io.FileUtils;
 
@@ -258,6 +259,11 @@ public final class Launcher {
      * @return the libraries directory
      */
     public File getLauncherBinariesDir() {
+        // Creation Reborn
+        if (LauncherArguments.getInstance().isDevelopmentChannel()) {
+            return new File(getBaseDir(), "launcher-development");
+        }
+
         return new File(getBaseDir(), "launcher");
     }
 
