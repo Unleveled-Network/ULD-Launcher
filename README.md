@@ -1,4 +1,4 @@
-[![](https://img.shields.io/discord/743859615724470273?label=Discord&logo=Discord&style=plastic)]
+[![](https://img.shields.io/discord/743859615724470273?label=Discord&logo=Discord&style=plastic)](https://discord.gg/jYuCRY6)
 
 ### 1.13+ notice
 
