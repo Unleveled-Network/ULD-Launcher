@@ -250,6 +250,7 @@ public class Modpack {
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Rating {
 
         @JsonProperty
