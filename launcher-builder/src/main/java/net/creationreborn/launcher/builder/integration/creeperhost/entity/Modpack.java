@@ -280,7 +280,10 @@ public class Modpack {
         private boolean sterotypeshate;
 
         @JsonProperty
-        private boolean languageviolence;
+        private boolean language;
+
+        @JsonProperty
+        private boolean violence;
 
         public long getId() {
             return id;
@@ -318,8 +321,12 @@ public class Modpack {
             return sterotypeshate;
         }
 
-        public boolean isLanguageviolence() {
-            return languageviolence;
+        public boolean isLanguage() {
+            return language;
+        }
+
+        public boolean isViolence() {
+            return violence;
         }
     }
 
