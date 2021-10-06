@@ -83,25 +83,30 @@ public class EnvironmentParser {
 	}
 
 	private String parseValue() throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 
-		while (true) {
-			char c = read();
+		try {
+			while (true) {
+				char c = read();
 
-			switch (c) {
-				case '\r':
-				case '\n':
-					return buffer.toString();
-				case '"':
-					buffer.append(parseQuotedPhrase());
-					break;
-				case '\\':
-					char next = read();
-					buffer.append(next);
-					break;
-				default:
-					buffer.append(c);
+				switch (c) {
+					case '\r':
+					case '\n':
+						return buffer.toString();
+					case '"':
+						buffer.append(parseQuotedPhrase());
+						break;
+					case '\\':
+						char next = read();
+						buffer.append(next);
+						break;
+					default:
+						buffer.append(c);
+				}
 			}
+		} catch (EOFException e) {
+			// No terminating newline. bad!
+			return buffer.toString();
 		}
 	}
 
