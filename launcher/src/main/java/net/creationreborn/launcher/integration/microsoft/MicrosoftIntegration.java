@@ -16,6 +16,7 @@
 
 package net.creationreborn.launcher.integration.microsoft;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skcraft.launcher.swing.SwingHelper;
 import com.skcraft.launcher.util.HttpRequest;
 import com.skcraft.launcher.util.SharedLocale;
@@ -38,6 +39,7 @@ public class MicrosoftIntegration {
     private static final String CLIENT_ID = "1aa0808c-9cb9-4ed3-ac56-1f83788d4d46";
     private static final String REDIRECT_URI = "http://127.0.0.1";
     private static final Server SERVER = new Server();
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     public static void login(Account account, Progress progress) throws Exception {
         if (SERVER.isAlive()) {
@@ -64,7 +66,7 @@ public class MicrosoftIntegration {
             progress.setStatus(SharedLocale.tr("login.status.microsoft"));
             MicrosoftResponse microsoftResponse = getMicrosoftToken(result.getCode());
             if (microsoftResponse == null || microsoftResponse.getAccessToken() == null) {
-                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.microsoft.error"), SharedLocale.tr("errorTitle"));
+                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.microsoft.error"), SharedLocale.tr("errorTitle"), new Exception(OBJECT_MAPPER.writeValueAsString(microsoftResponse)));
                 return;
             }
 
@@ -76,7 +78,7 @@ public class MicrosoftIntegration {
             progress.setStatus(SharedLocale.tr("login.status.xbox"));
             XboxResponse xboxToken = getXboxToken(microsoftResponse.getAccessToken());
             if (xboxToken == null || xboxToken.getToken() == null || xboxToken.getUhs() == null) {
-                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.xbox.error"), SharedLocale.tr("errorTitle"));
+                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.xbox.error"), SharedLocale.tr("errorTitle"), new Exception(OBJECT_MAPPER.writeValueAsString(xboxToken)));
                 return;
             }
 
@@ -86,7 +88,7 @@ public class MicrosoftIntegration {
             progress.setStatus(SharedLocale.tr("login.status.xsts"));
             XboxResponse xstsToken = getXSTSToken(xboxToken.getToken());
             if (xstsToken == null || xstsToken.getToken() == null || xstsToken.getUhs() == null) {
-                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.xsts.error"), SharedLocale.tr("errorTitle"));
+                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.xsts.error"), SharedLocale.tr("errorTitle"), new Exception(OBJECT_MAPPER.writeValueAsString(xstsToken)));
                 return;
             }
 
@@ -94,7 +96,7 @@ public class MicrosoftIntegration {
             progress.setStatus(SharedLocale.tr("login.status.minecraft"));
             MinecraftResponse minecraftResponse = getMinecraftToken(xstsToken.getUhs(), xstsToken.getToken());
             if (minecraftResponse == null || minecraftResponse.getAccessToken() == null) {
-                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.minecraft.error"), SharedLocale.tr("errorTitle"));
+                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.minecraft.error"), SharedLocale.tr("errorTitle"), new Exception(OBJECT_MAPPER.writeValueAsString(minecraftResponse)));
                 return;
             }
 
@@ -104,7 +106,7 @@ public class MicrosoftIntegration {
             progress.setStatus(SharedLocale.tr("login.status.profiles"));
             Profile profile = getProfile(minecraftResponse.getAccessToken());
             if (profile == null || profile.getId() == null || profile.getName() == null) {
-                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.profiles.error"), SharedLocale.tr("errorTitle"));
+                SwingHelper.showErrorDialog(null, SharedLocale.tr("login.status.profiles.error"), SharedLocale.tr("errorTitle"), new Exception(OBJECT_MAPPER.writeValueAsString(profile)));
                 return;
             }
 
