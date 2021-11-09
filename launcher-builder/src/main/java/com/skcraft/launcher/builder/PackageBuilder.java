@@ -37,7 +37,7 @@ import net.creationreborn.launcher.model.modpack.Manifest;
 
 import java.io.*;
 import java.net.URL;
-import java.nio.file.Files;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Properties;
@@ -164,22 +164,10 @@ public class PackageBuilder {
                 BasicInstallProfile basicProfile = mapper.readValue(BuilderUtils.readStringFromStream(reader),
                         BasicInstallProfile.class);
 
-                // Extract the library
-                String filePath = profile.getInstallData().getFilePath();
-                String libraryPath = profile.getInstallData().getPath();
-
-                if (filePath != null && libraryPath != null) {
-                    ZipEntry libraryEntry = BuilderUtils.getZipEntry(jarFile, filePath);
-
-                    if (libraryEntry != null) {
-                        Library library = new Library();
-                        library.setName(libraryPath);
-                        File extractPath = new File(librariesDir, library.getPath(Environment.getInstance()));
-                        Files.createDirectories(extractPath.getParentFile().toPath());
-                        ByteStreams.copy(closer.register(jarFile.getInputStream(libraryEntry)), Files.newOutputStream(extractPath.toPath()));
-                    } else {
-                        log.warning("Could not find the file '" + filePath + "' in " + file.getAbsolutePath() + ", which means that this mod loader will not work correctly");
-                    }
+                if (basicProfile.isLegacy()) {
+                    processor = new OldForgeLoaderProcessor();
+                } else if (basicProfile.getProfile().equalsIgnoreCase("forge")) {
+                    processor = new ModernForgeLoaderProcessor();
                 }
             } else if (BuilderUtils.getZipEntry(jarFile, "fabric-installer.json") != null) {
             	processor = new FabricLoaderProcessor();
@@ -212,9 +200,8 @@ public class PackageBuilder {
         for (Library library : Iterables.concat(loaderLibraries, installerLibraries)) {
             library.ensureDownloadsExist();
 
-            if (!outputPath.exists()) {
-                Files.createDirectories(outputPath.getParentFile().toPath());
-                boolean found = false;
+            for (Library.Artifact artifact : library.getDownloads().getAllArtifacts()) {
+                File outputPath = new File(librariesDir, artifact.getPath());
 
                 if (!outputPath.exists()) {
                     Files.createParentDirs(outputPath);

@@ -4,6 +4,8 @@ plugins {
     id "io.franzbecker.gradle-lombok"
 }
 
+mainClassName = "com.skcraft.launcher.FancyLauncher"
+
 configurations {
     compileJava.dependsOn(":launcher:build")
     jar.enabled = false
@@ -19,7 +21,7 @@ repositories {
 
 dependencies {
     compile(project(path: ":launcher"))
-    compile("com.github.insubstantial:substance:7.3")
+    compile("io.github.cottonmc.insubstantial:substance:7.3.1-SNAPSHOT")
 }
 
 shadowJar {

@@ -4,6 +4,8 @@ plugins {
     id "io.franzbecker.gradle-lombok"
 }
 
+mainClassName = "com.skcraft.launcher.builder.PackageBuilder"
+
 configurations {
     compileJava.dependsOn(":launcher:build")
     jar.enabled = false

@@ -66,8 +66,10 @@ public class ClientFileCollector extends DirectoryWalker {
                 file.getName() + FileUrlScanner.URL_FILE_SUFFIX);
         String location;
         boolean copy = true;
-        if (urlFile.exists() && !System.getProperty("com.skcraft.builder.ignoreURLOverrides", "false").equalsIgnoreCase("true")) {
-            location = Files.asCharSource(urlFile, Charset.defaultCharset()).readFirstLine();
+        if (urlFile.exists() && FileUrlScanner.isEnabled()) {
+            FileUrlRedirect redirect = FileUrlRedirect.fromFile(urlFile);
+
+            location = redirect.getUrl().toString();
             copy = false;
         } else {
             location = hash.substring(0, 2) + "/" + hash.substring(2, 4) + "/" + hash;
