@@ -9,9 +9,9 @@ package com.skcraft.launcher.dialog;
 import com.skcraft.launcher.Configuration;
 import com.skcraft.launcher.Launcher;
 import com.skcraft.launcher.dialog.component.BetterComboBox;
-import com.skcraft.launcher.launch.AddJavaRuntime;
-import com.skcraft.launcher.launch.JavaRuntime;
-import com.skcraft.launcher.launch.JavaRuntimeFinder;
+import com.skcraft.launcher.launch.runtime.AddJavaRuntime;
+import com.skcraft.launcher.launch.runtime.JavaRuntime;
+import com.skcraft.launcher.launch.runtime.JavaRuntimeFinder;
 import com.skcraft.launcher.persistence.Persistence;
 import com.skcraft.launcher.swing.*;
 import com.skcraft.launcher.util.SharedLocale;
@@ -70,13 +70,6 @@ public class ConfigurationDialog extends JDialog {
         this.config = launcher.getConfig();
         mapper = new ObjectSwingMapper(config);
 
-        setTitle(SharedLocale.tr("options.title"));
-        initComponents();
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(new Dimension(400, 500));
-        setResizable(false);
-        setLocationRelativeTo(owner);
-
         JavaRuntime[] javaRuntimes = JavaRuntimeFinder.getAvailableRuntimes().toArray(new JavaRuntime[0]);
         DefaultComboBoxModel<JavaRuntime> model = new DefaultComboBoxModel<>(javaRuntimes);
 
@@ -87,9 +80,16 @@ public class ConfigurationDialog extends JDialog {
         }
 
         jvmRuntime.setModel(model);
+        jvmRuntime.addItem(AddJavaRuntime.ADD_RUNTIME_SENTINEL);
+
         jvmRuntime.setSelectedItem(config.getJavaRuntime());
 
-        jvmRuntime.addItem(AddJavaRuntime.ADD_RUNTIME_SENTINEL);
+        setTitle(SharedLocale.tr("options.title"));
+        initComponents(); // Must be called after jvmRuntime model setup
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setSize(new Dimension(400, 500));
+        setResizable(false);
+        setLocationRelativeTo(owner);
 
         mapper.map(jvmArgsText, "jvmArgs");
         mapper.map(minMemorySpinner, "minMemory");
