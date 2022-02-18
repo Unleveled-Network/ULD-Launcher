@@ -12,8 +12,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.skcraft.launcher.LauncherException;
-import com.skcraft.launcher.util.Environment;
-import com.skcraft.launcher.util.Platform;
 import com.skcraft.launcher.util.SharedLocale;
 import com.skcraft.launcher.util.SwingExecutor;
 import lombok.NonNull;
@@ -109,7 +107,6 @@ public final class SwingHelper {
         } catch (IOException e) {
             showErrorDialog(parentComponent, tr("errors.openUrlError", url.toString()), SharedLocale.tr("errorTitle"));
         } catch (URISyntaxException e) {
-            log.log(Level.WARNING, "Malformed URL; this is a programming error!", e);
         }
     }
 
@@ -358,7 +355,7 @@ public final class SwingHelper {
      * Focus a component.
      *
      * <p>The focus call happens in {@link javax.swing.SwingUtilities#invokeLater(Runnable)}.</p>
-     * 
+     *
      * @param component the component
      */
     public static void focusLater(@NonNull final Component component) {

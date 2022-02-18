@@ -41,6 +41,7 @@ For those technically inclined, you can generate modpacks from Git (or any VCS) 
 
 Best of all, our launcher is Minecraft's oldest surviving modpack launcher platform. :thumbsup:
 
+
 ## Getting Started
 
 You'll probably need a few hours to get everything working. Fortunately, we have a [detailed wiki](https://github.com/SKCraft/Launcher/wiki) with screenshots for every step, intended for someone with minimal technical experience.
@@ -64,7 +65,7 @@ Making a modpack is just drag and drop into a folder like this:
 * src/**resourcepacks**/
 * loaders/
 
-LiteLoader and Forge installers, or Fabric Loader, go into the *loaders* folder. :ok_hand:
+You'd put LiteLoader and Forge into the *loaders* folder. :ok_hand:
 
 ### More Pictures
 

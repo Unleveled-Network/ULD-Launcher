@@ -10,7 +10,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
-import com.skcraft.launcher.install.*;
+import com.skcraft.launcher.install.InstallLog;
+import com.skcraft.launcher.install.InstallLogFileMover;
+import com.skcraft.launcher.install.Installer;
+import com.skcraft.launcher.install.UpdateCache;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -47,13 +50,13 @@ public class FileInstall extends ManifestEntry {
 
     @Override
     public void install(@NonNull Installer installer, @NonNull InstallLog log,
-                        @NonNull UpdateCache cache, InstallExtras extras) throws IOException {
+                        @NonNull UpdateCache cache, @NonNull File contentDir) throws IOException {
         if (getWhen() != null && !getWhen().matches()) {
             return;
         }
 
         String targetPath = getTargetPath();
-        File targetFile = new File(extras.getContentDir(), targetPath);
+        File targetFile = new File(contentDir, targetPath);
         String fileVersion = getImpliedVersion();
         URL url = concat(getManifest().getObjectsUrl(), getLocation());
 

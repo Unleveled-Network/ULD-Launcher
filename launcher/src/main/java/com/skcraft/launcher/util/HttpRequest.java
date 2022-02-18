@@ -9,7 +9,6 @@ package com.skcraft.launcher.util;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skcraft.concurrency.ProgressObservable;
-import lombok.Data;
 import lombok.Getter;
 import lombok.extern.java.Log;
 
@@ -17,11 +16,11 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.*;
+import java.net.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.skcraft.launcher.LauncherUtils.checkInterrupted;
 import static org.apache.commons.io.IOUtils.closeQuietly;
@@ -47,7 +46,6 @@ public class HttpRequest implements Closeable, ProgressObservable {
     private InputStream inputStream;
     private int redirectCount;
 
-    private PartialDownloadInfo resumeInfo = null;
     private long contentLength = -1;
     private long readBytes = 0;
 
@@ -117,7 +115,8 @@ public class HttpRequest implements Closeable, ProgressObservable {
 
             conn = this.runRequest(url);
 
-            inputStream = isSuccessCode() ? conn.getInputStream() : conn.getErrorStream();
+            inputStream = conn.getResponseCode() == HttpURLConnection.HTTP_OK ?
+                    conn.getInputStream() : conn.getErrorStream();
 
             successful = true;
         } finally {
@@ -134,7 +133,7 @@ public class HttpRequest implements Closeable, ProgressObservable {
             throw new IOException("Too many redirects!");
         }
 
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        HttpURLConnection conn = (HttpURLConnection) reformat(url).openConnection();
         conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Java) SKMCLauncher");
         conn.setInstanceFollowRedirects(false);
 
@@ -142,10 +141,6 @@ public class HttpRequest implements Closeable, ProgressObservable {
             conn.setRequestProperty("Content-Type", contentType);
             conn.setRequestProperty("Content-Length", Integer.toString(body.length));
             conn.setDoInput(true);
-        }
-
-        if (resumeInfo != null) {
-            conn.setRequestProperty("Range", String.format("bytes=%d-", resumeInfo.currentLength));
         }
 
         for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -176,6 +171,7 @@ public class HttpRequest implements Closeable, ProgressObservable {
             case 307:
             case 308:
                 String location = conn.getHeaderField("Location");
+                location = URLDecoder.decode(location, "UTF-8");
                 redirectCount++;
 
                 return runRequest(new URL(this.url, location));
@@ -200,11 +196,6 @@ public class HttpRequest implements Closeable, ProgressObservable {
             if (code == responseCode) {
                 return this;
             }
-        }
-
-        if (resumeInfo != null && responseCode == 206) {
-            // Allow 206 Partial Content for resumed requests
-            return this;
         }
 
         close();
@@ -247,31 +238,12 @@ public class HttpRequest implements Closeable, ProgressObservable {
     }
 
     /**
-     * Check if the response code indicates a successful request.
-     * @return True if response code is 2xx, false otherwise.
-     * @throws IOException on I/O error getting the response code.
-     */
-    public boolean isSuccessCode() throws IOException {
-        int code = getResponseCode();
-        return code >= 200 && code < 300;
-    }
-
-    /**
      * Get the input stream.
      *
      * @return the input stream
      */
     public InputStream getInputStream() {
         return inputStream;
-    }
-
-    /**
-     * Check if a connection was ever made
-     *
-     * @return True if a connection is available, false otherwise
-     */
-    public boolean isConnected() {
-        return conn != null;
     }
 
     /**
@@ -310,10 +282,9 @@ public class HttpRequest implements Closeable, ProgressObservable {
     public HttpRequest saveContent(File file) throws IOException, InterruptedException {
         FileOutputStream fos = null;
         BufferedOutputStream bos = null;
-        boolean shouldAppend = resumeInfo != null && getResponseCode() == 206;
 
         try {
-            fos = new FileOutputStream(file, shouldAppend);
+            fos = new FileOutputStream(file);
             bos = new BufferedOutputStream(fos);
 
             saveContent(bos);
@@ -357,38 +328,11 @@ public class HttpRequest implements Closeable, ProgressObservable {
                 readBytes += len;
                 checkInterrupted();
             }
-
-            if (contentLength >= 0 && contentLength != readBytes) {
-                throw new IOException(String.format("Connection closed with %d bytes transferred, expected %d",
-                        readBytes, contentLength));
-            }
         } finally {
             close();
         }
 
         return this;
-    }
-
-    public Optional<PartialDownloadInfo> canRetryPartial() {
-        if (conn == null) {
-            return Optional.empty();
-        }
-
-        if ("bytes".equals(conn.getHeaderField("Accept-Ranges"))) {
-            return Optional.of(new PartialDownloadInfo(contentLength, readBytes));
-        }
-
-        return Optional.empty();
-    }
-
-    public HttpRequest setResumeInfo(PartialDownloadInfo info) {
-        this.resumeInfo = info;
-
-        return this;
-    }
-
-    public boolean isResumedRequest() {
-        return resumeInfo != null;
     }
 
     @Override
@@ -454,6 +398,29 @@ public class HttpRequest implements Closeable, ProgressObservable {
             return new URL(url);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * URL may contain spaces and other nasties that will cause a failure.
+     *
+     * @param existing the existing URL to transform
+     * @return the new URL, or old one if there was a failure
+     */
+    private static URL reformat(URL existing) {
+        try {
+            URL url = new URL(existing.toString());
+            URI uri = new URI(
+                    url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(),
+                    url.getPath(), url.getQuery(), url.getRef());
+            url = uri.toURL();
+            return url;
+        } catch (MalformedURLException e) {
+            log.warning("Failed to reformat url " + existing.toString() + ", using unformatted version.");
+            return existing;
+        } catch (URISyntaxException e) {
+            log.warning("Failed to reformat url " + existing.toString() + ", using unformatted version.");
+            return existing;
         }
     }
 
@@ -620,12 +587,6 @@ public class HttpRequest implements Closeable, ProgressObservable {
 
             return this;
         }
-    }
-
-    @Data
-    public static class PartialDownloadInfo {
-        private final long expectedLength;
-        private final long currentLength;
     }
 
 }

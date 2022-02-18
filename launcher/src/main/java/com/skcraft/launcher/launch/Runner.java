@@ -9,15 +9,12 @@ package com.skcraft.launcher.launch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import com.skcraft.concurrency.DefaultProgress;
 import com.skcraft.concurrency.ProgressObservable;
 import com.skcraft.launcher.*;
 import com.skcraft.launcher.auth.Session;
 import com.skcraft.launcher.install.ZipExtract;
-import com.skcraft.launcher.launch.runtime.JavaRuntime;
-import com.skcraft.launcher.launch.runtime.JavaRuntimeFinder;
 import com.skcraft.launcher.model.minecraft.*;
 import com.skcraft.launcher.persistence.Persistence;
 import com.skcraft.launcher.util.Environment;
@@ -35,7 +32,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import static com.skcraft.launcher.LauncherUtils.checkInterrupted;
@@ -215,17 +211,9 @@ public class Runner implements Callable<Process>, ProgressObservable {
      *
      * @throws IOException on I/O error
      */
-    private void addJvmArgs() throws IOException, LauncherException {
-        Optional<MemorySettings> memorySettings = Optional.ofNullable(instance.getSettings().getMemorySettings());
-
-        int minMemory = memorySettings
-                .map(MemorySettings::getMinMemory)
-                .orElse(config.getMinMemory());
-
-        int maxMemory = memorySettings
-                .map(MemorySettings::getMaxMemory)
-                .orElse(config.getMaxMemory());
-
+    private void addJvmArgs() throws IOException {
+        int minMemory = config.getMinMemory();
+        int maxMemory = config.getMaxMemory();
         int permGen = config.getPermGen();
 
         if (minMemory <= 0) {
@@ -252,24 +240,16 @@ public class Runner implements Callable<Process>, ProgressObservable {
         builder.setMaxMemory(maxMemory);
         builder.setPermGen(permGen);
 
-        JavaRuntime selectedRuntime = Optional.ofNullable(instance.getSettings().getRuntime())
-                .orElseGet(() -> Optional.ofNullable(versionManifest.getJavaVersion())
-                        .flatMap(JavaRuntimeFinder::findBestJavaRuntime)
-                        .orElse(config.getJavaRuntime())
-                );
-
-        // Builder defaults to the PATH `java` if the runtime is null
-        builder.setRuntime(selectedRuntime);
+        String rawJvmPath = config.getJvmPath();
+        if (!Strings.isNullOrEmpty(rawJvmPath)) {
+            builder.tryJvmPath(new File(rawJvmPath));
+        }
 
         List<String> flags = builder.getFlags();
-        String[] rawJvmArgsList = new String[] {
-                config.getJvmArgs(),
-                instance.getSettings().getCustomJvmArgs()
-        };
-
-        for (String rawJvmArgs : rawJvmArgsList) {
-            if (!Strings.isNullOrEmpty(rawJvmArgs)) {
-                flags.addAll(JavaProcessBuilder.splitArgs(rawJvmArgs));
+        String rawJvmArgs = config.getJvmArgs();
+        if (!Strings.isNullOrEmpty(rawJvmArgs)) {
+            for (String arg : JavaProcessBuilder.splitArgs(rawJvmArgs)) {
+                flags.add(arg);
             }
         }
 
@@ -281,16 +261,6 @@ public class Runner implements Callable<Process>, ProgressObservable {
                     flags.add(substitutor.replace(subArg));
                 }
             }
-        }
-
-        if (versionManifest.getLogging() != null) {
-            log.info("Logging config present, log4j2 bug likely mitigated");
-
-            VersionManifest.LoggingConfig config = versionManifest.getLogging().getClient();
-            File configFile = new File(launcher.getLibrariesDir(), config.getFile().getId());
-            StrSubstitutor loggingSub = new StrSubstitutor(ImmutableMap.of("path", configFile.getAbsolutePath()));
-
-            flags.add(loggingSub.replace(config.getArgument()));
         }
     }
 
@@ -436,10 +406,6 @@ public class Runner implements Callable<Process>, ProgressObservable {
         map.put("launcher_version", launcher.getVersion());
         map.put("classpath", builder.buildClassPath());
         map.put("natives_directory", extractDir.getAbsolutePath());
-
-        // Forge additions
-        map.put("library_directory", launcher.getLibrariesDir().getAbsolutePath());
-        map.put("classpath_separator", System.getProperty("path.separator"));
 
         return map;
     }
