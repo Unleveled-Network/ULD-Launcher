@@ -11,7 +11,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Splitter;
 import lombok.Data;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -47,8 +50,6 @@ public class VersionManifest {
 
     public void setMinecraftArguments(String minecraftArguments) {
         MinecraftArguments result = new MinecraftArguments();
-        result.setGameArguments(new ArrayList<GameArgument>());
-        result.setJvmArguments(new ArrayList<GameArgument>());
 
         for (String arg : Splitter.on(' ').split(minecraftArguments)) {
             result.getGameArguments().add(new GameArgument(arg));
